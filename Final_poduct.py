@@ -1,4 +1,6 @@
 import numpy as np
+import pandas as pd
+from tabulate import tabulate
 
 
 def Gauss_eliminate(table, pivot_row, pivot_column):
@@ -13,6 +15,14 @@ def Gauss_eliminate(table, pivot_row, pivot_column):
 def normalize(table, pivot_row, pivot_column):
     table[pivot_row] = table[pivot_row]/table[pivot_row][pivot_column]
 
+
+def update_and_print_out(display_table, constrain_ls, z, delta, basis_coeff, j):
+    display_table.iloc[2:-2, 2:] = constrain_ls
+    display_table.iloc[2:-2, 0] = basis_coeff
+    display_table.iloc[2:-2, 1] = j
+    display_table.iloc[-2, 2:] = z
+    display_table.iloc[-1, 2:-1] = delta
+    print(tabulate(display_table,showindex="never",tablefmt="grid"))
 
 # Get objective function, constrains, signs,max/min, number of var,number of constrain
 
@@ -149,11 +159,40 @@ for i, j in basis_point:
     if (count_coeff == number_constrain):
         break
 
+j = np.array([i[1] for i in basis_point])
+j = j.T
+
+# make table
+
+display_table = pd.DataFrame(columns=range(np.shape(constrain_ls)[
+                             1]+2), index=range(np.shape(constrain_ls)[0]+4))
+
+header = ["c_i"]
+header.extend(list(map(str, objective)))
+display_table.iloc[0, 1:-1] = header
+name = ["c_j", "j", "result"]
+name = name[:2]+["x"+str(i)
+                 for i in range(np.shape(constrain_ls)[1]-1)] + name[2:]
+display_table.iloc[1] = name
+display_table.iloc[2:-2, 0] = basis_coeff
+display_table.iloc[2:-2, 1] = j
+display_table.iloc[2:-2, 2:] = constrain_ls
+bottom = ["z", "delta"]
+display_table.iloc[-2:, 1] = bottom
+display_table = display_table.fillna("")
+
+run_count = 1
 # Run simplex method until end
 while (True):
+    print()
+    print(f"{run_count} iteration")
+    print()
     z = np.dot(constrain_ls.T, basis_coeff)
     delta = objective-z[:-1]
     if (not np.any(delta > 0)):
+        update_and_print_out(display_table, constrain_ls,
+                             z, delta, basis_coeff, j)
+        print()
         print(f"There is a solution for this problems")
 
         # Extract answer
@@ -164,7 +203,8 @@ while (True):
             if bool:
                 pos, = np.where(constrain_ls[:, i[1]] == 1)
                 answer[i[1]] = constrain_ls[pos[0], -1]
-        result = np.dot(answer, objective) if condition == "max" else -np.dot(answer, objective)
+        result = np.dot(
+            answer, objective) if condition == "max" else -np.dot(answer, objective)
         answer = answer[:number_var]
         result = round(result, 12)
         print(f"The answer of this problems is {answer}")
@@ -184,3 +224,9 @@ while (True):
         normalize(constrain_ls, pivot_row, pivot_col)
         Gauss_eliminate(constrain_ls, pivot_row, pivot_col)
         basis_coeff[pivot_row] = objective[pivot_col]
+        j[pivot_row] = pivot_col
+        update_and_print_out(display_table, constrain_ls,
+                             z, delta, basis_coeff, j)
+        print()
+        print(f"Pivotpoint is at ({pivot_row}, {pivot_col})")
+        run_count += 1
