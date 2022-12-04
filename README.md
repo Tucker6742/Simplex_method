@@ -9,10 +9,11 @@ Requirement library
 
 - tabulate
 
+to install all these library
 ```
 pip install numpy
 pip install pandas
 pip install tabulate
 ```
-to install all these library
+
 Video tutorial: https://youtu.be/ahDEIV2yd4o
