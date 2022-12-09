@@ -1,6 +1,12 @@
 # Simplex_method
 Program that solve linear programming problems by simplex method
 
+System requirement
+
+Python 3.10 or above
+
+[Download python](https://www.python.org/downloads/)
+
 Requirement library
 
 - numpy
@@ -21,7 +27,7 @@ To install all these library
   pip install tabulate
   ```
 
-To install pip:
+To install pip if there are errors:
 
 - Open Powershell/Cmd
 - Type this row
