@@ -10,15 +10,31 @@ Requirement library
 - tabulate
 
 To install all these library
-```
-pip install numpy
-pip install pandas
-pip install tabulate
-```
+
+- Open Powershell/Cmd
+
+- Type each row
+
+  ```
+  pip install numpy
+  pip install pandas
+  pip install tabulate
+  ```
 
 To install pip:
+
+- Open Powershell/Cmd
+- Type this row
+
 ```
 py -m ensurepip --upgrade
 ```
+
+To download and run code
+
+- Click on the "Code" green button
+- Download as Zip
+- Install requirement library
+- Run Final_product.py
 
 Video tutorial: https://youtu.be/ahDEIV2yd4o
