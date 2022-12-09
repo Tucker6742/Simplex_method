@@ -25,8 +25,7 @@ def update_and_print_out(display_table, constrain_ls, z, delta, basis_coeff, j):
     display_table.iloc[-1, 2:-1] = delta
     print(tabulate(display_table, showindex="never", tablefmt="fancy_grid"))
 
-# Get objective function, constrains, signs,max/min, number of var,number of constrain
-
+# Get objective function, max/min, number of var
 
 number_var = int(input(
     f"Maximum number of variables to evaluate (both in constrains and objective function): "))
@@ -37,11 +36,13 @@ for i in range(number_var):
     objective[i] = input(f"Enter coefficients of x{i+1}: ")
 
 condition = input("Is this a max or a min problem? ")
+
 # convert objective
 
 if condition == "min":
     objective = objective*-1
 
+# Get constrains, number of constrain, signs
 
 number_constrain = 1
 constrain_ls = np.zeros((1, number_var+1))
@@ -78,7 +79,6 @@ while True:
             constrain_ls, np.zeros((1, number_var+1)), axis=0)
         sign = np.append(sign, 0)
 
-
 # convert constrains
 
 fix_constrain = np.array(constrain_ls[:, -1] < 0)
@@ -98,6 +98,7 @@ constrain_ls = np.insert(constrain_ls, -1, slack_matrix.T, axis=1)
 objective = np.append(objective, np.zeros(np.shape(slack_matrix)[1]))
 
 # find basis
+
 single_number = np.array([np.count_nonzero(constrain_ls[:, :-1], axis=0) == 1])
 geq_0 = np.all(constrain_ls[:, :-1] >= 0, axis=0)
 possible_basis = single_number & geq_0
@@ -140,6 +141,7 @@ _, cols = np.where(final == True)
 _, rows = np.where(constrain_ls[:, cols].T != 0)
 
 # Normalize basis
+
 count_basis = 0
 for x, y in zip(rows, cols):
     normalize(constrain_ls, x, y)
@@ -148,6 +150,7 @@ for x, y in zip(rows, cols):
         break
 
 # get basis coeff
+
 value = [(r, c) for r, c in zip(rows, cols)]
 basis_coeff = np.zeros(0)
 count_coeff = 0
@@ -183,7 +186,9 @@ display_table.iloc[-2:, 1] = bottom
 display_table = display_table.fillna("")
 
 run_count = 1
+
 # Run simplex method until end
+
 while (True):
     print()
     print(f"{run_count} iteration")
