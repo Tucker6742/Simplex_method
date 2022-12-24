@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from tabulate import tabulate
+import sys
 np.set_printoptions(precision=3, suppress=True)
 
 
@@ -25,7 +26,8 @@ def update_and_print_out(display_table, constrain_ls, z, delta, basis_coeff, j):
     display_table.iloc[-1, 2:-1] = delta
     print(tabulate(display_table, showindex="never", tablefmt="fancy_grid"))
 
-# Get objective function, max/min, number of var
+# Get objective function, constrains, signs,max/min, number of var,number of constrain
+
 
 number_var = int(input(
     f"Maximum number of variables to evaluate (both in constrains and objective function): "))
@@ -33,16 +35,9 @@ number_var = int(input(
 print(f"Enter the coefficients of the objective function.")
 objective = np.zeros(number_var)
 for i in range(number_var):
-    objective[i] = input(f"Enter coefficients of x{i+1}: ")
+    objective[i] = float(eval(input(f"Enter coefficients of x{i+1}: ")))
 
 condition = input("Is this a max or a min problem? ")
-
-# convert objective
-
-if condition == "min":
-    objective = objective*-1
-
-# Get constrains, number of constrain, signs
 
 number_constrain = 1
 constrain_ls = np.zeros((1, number_var+1))
@@ -50,7 +45,8 @@ sign = np.zeros(1)
 while True:
     print(f"Enter the coefficients of the {number_constrain} constrain.")
     for i in range(number_var):
-        constrain_ls[-1, i] = int(input(f"Enter coefficients of x{i+1}: "))
+        constrain_ls[-1,
+                     i] = float(eval(input(f"Enter coefficients of x{i+1}: ")))
 
     while True:
         equal = input(
@@ -69,7 +65,7 @@ while True:
                 print("Value enter is not allowed try again.")
 
     constrain_ls[-1, -
-                 1] = int(input(f"Enter coefficients of the right side: "))
+                 1] = float(eval(input(f"Enter coefficients of the right side: ")))
     more = input("is there any other constrain(y/n)?")
     if (more == "n"):
         break
@@ -79,14 +75,20 @@ while True:
             constrain_ls, np.zeros((1, number_var+1)), axis=0)
         sign = np.append(sign, 0)
 
+
 # convert constrains
 
 fix_constrain = np.array(constrain_ls[:, -1] < 0)
 count_fix_constrain = np.count_nonzero(fix_constrain)
-
 if (count_fix_constrain != 0):
     pos_fix_constrain = np.where(fix_constrain == True)
     constrain_ls[pos_fix_constrain, :] = constrain_ls[pos_fix_constrain, :]*-1
+
+# convert objective
+
+if condition == "min":
+    objective = objective*-1
+
 
 # add slack var to objective and constrain_ls
 
@@ -105,29 +107,43 @@ possible_basis = single_number & geq_0
 count_possible_basis = np.count_nonzero(possible_basis)
 
 if (count_possible_basis < number_constrain):
-    _, good_single_num = np.where(single_number == True)
-    filter_geq0 = geq_0[good_single_num]
-    bad_geq0 = np.where(filter_geq0 == False)
-    error_col = good_single_num[bad_geq0]
-    error_row, _ = np.where(constrain_ls[:, error_col].T != 0)
+
+    # find row not OK
+    list_row = np.arange(number_constrain)
+    _, good_col = np.where(possible_basis == True)
+    good_row, _ = np.where(constrain_ls[:, good_col] != 0)
+    bad_row = [item for item in list_row if item not in good_row]
 
     # get sum of all error rows
-    check_row = -np.sum(constrain_ls[error_row, :], axis=0)
+    check_row = -np.sum(constrain_ls[bad_row, :], axis=0)
     constrain_ls = np.vstack((constrain_ls, check_row))
 
-    # if there is number < 0 in check row then keep doing this
+    # priority row to pivot
+    priority = np.array([0]*3)
+    # If last row has a negative number then repeat
     while (np.any(constrain_ls[-1, :-1] < 0)):
         # find most negative number there
         fixing_pivot_col = np.argmin(constrain_ls[-1, :-1])
         fixing_ratio = np.divide(
             constrain_ls[:-1, -1], constrain_ls[:-1, fixing_pivot_col])
         filter_fixing_ratio = np.extract(fixing_ratio > 0, fixing_ratio)
-        fixing_pivot_row = np.argmin(filter_fixing_ratio)
+        filter_pivot_row = np.argmin(filter_fixing_ratio)
+        possible_fixing_pivot_row = np.where(
+            fixing_ratio == filter_fixing_ratio[filter_pivot_row])[0]
+        for i in possible_fixing_pivot_row:
+            if priority[i] == 0:
+                fixing_pivot_row = i
+                priority[i] = 1
+                break
+            else:
+                continue
         normalize(constrain_ls, fixing_pivot_row, fixing_pivot_col)
         Gauss_eliminate(constrain_ls, fixing_pivot_row, fixing_pivot_col)
 
     if (not np.all(constrain_ls[-1, :] == 0)):
         print(f"There is 0 solution for this problems.")
+        sys.exit()
+
 
     # export table
     constrain_ls = constrain_ls[:-1, :]
@@ -136,12 +152,11 @@ if (count_possible_basis < number_constrain):
 
 single_number = np.array([np.count_nonzero(constrain_ls[:, :-1], axis=0) == 1])
 geq_0 = np.all(constrain_ls[:, :-1] >= 0, axis=0)
-final = single_number & geq_0
-_, cols = np.where(final == True)
+possible_basis = single_number & geq_0
+_, cols = np.where(possible_basis == True)
 _, rows = np.where(constrain_ls[:, cols].T != 0)
 
 # Normalize basis
-
 count_basis = 0
 for x, y in zip(rows, cols):
     normalize(constrain_ls, x, y)
@@ -150,7 +165,6 @@ for x, y in zip(rows, cols):
         break
 
 # get basis coeff
-
 value = [(r, c) for r, c in zip(rows, cols)]
 basis_coeff = np.zeros(0)
 count_coeff = 0
@@ -188,7 +202,6 @@ display_table = display_table.fillna("")
 run_count = 1
 
 # Run simplex method until end
-
 while (True):
     print()
     print(f"{run_count} iteration")
@@ -197,12 +210,11 @@ while (True):
     delta = objective-z[:-1]
 
     copy_z = np.round(z, 3)
-    copy_delta = np.round(delta,3)
-    copy_constrain_ls = np.round(constrain_ls,3)
-
+    copy_delta = np.round(delta, 3)
+    copy_constrain_ls = np.round(constrain_ls, 3)
+    update_and_print_out(display_table, copy_constrain_ls,
+                         copy_z, copy_delta, basis_coeff, j)
     if (not np.any(delta > 0)):
-        update_and_print_out(display_table, copy_constrain_ls,
-                             copy_z, copy_delta, basis_coeff, j)
         print()
         print(f"There is a solution for this problems")
 
@@ -236,13 +248,10 @@ while (True):
         Gauss_eliminate(constrain_ls, pivot_row, pivot_col)
         basis_coeff[pivot_row] = objective[pivot_col]
 
-        copy_constrain_ls = np.round(constrain_ls,3)
-        copy_z = np.round(z,3)
-        copy_delta = np.round(delta,3)
-
+        copy_constrain_ls = np.round(constrain_ls, 3)
+        copy_z = np.round(z, 3)
+        copy_delta = np.round(delta, 3)
         j[pivot_row] = pivot_col
-        update_and_print_out(display_table, copy_constrain_ls,
-                             copy_z, copy_delta, basis_coeff, j)
         print()
         print(f"Pivot point is at ({pivot_row}, {pivot_col})")
         run_count += 1
