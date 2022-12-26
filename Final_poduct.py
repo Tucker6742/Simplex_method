@@ -76,6 +76,18 @@ while True:
         sign = np.append(sign, 0)
 
 
+
+
+
+# add slack var to objective and constrain_ls
+
+zeros, = np.where(sign == 0)
+slack_matrix = np.zeros((len(sign), len(sign)), dtype=np.float64)
+np.fill_diagonal(slack_matrix, sign)
+slack_matrix = np.delete(slack_matrix, (zeros), axis=1)
+constrain_ls = np.insert(constrain_ls, -1, slack_matrix.T, axis=1)
+objective = np.append(objective, np.zeros(np.shape(slack_matrix)[1]))
+
 # convert constrains
 
 fix_constrain = np.array(constrain_ls[:, -1] < 0)
@@ -88,16 +100,6 @@ if (count_fix_constrain != 0):
 
 if condition == "min":
     objective = objective*-1
-
-
-# add slack var to objective and constrain_ls
-
-zeros, = np.where(sign == 0)
-slack_matrix = np.zeros((len(sign), len(sign)), dtype=np.float64)
-np.fill_diagonal(slack_matrix, sign)
-slack_matrix = np.delete(slack_matrix, (zeros), axis=1)
-constrain_ls = np.insert(constrain_ls, -1, slack_matrix.T, axis=1)
-objective = np.append(objective, np.zeros(np.shape(slack_matrix)[1]))
 
 # find basis
 
@@ -241,6 +243,12 @@ while (True):
         pivot_col = index[0]
         ratio = np.divide(constrain_ls[:, -1], constrain_ls[:, pivot_col])
         filter_row = np.extract(ratio > 0, ratio)
+        if (len(filter_row) == 0):
+            print()
+            print(f"Unable to pivot in column {pivot_col}\n")
+            print(f"The problem is unbounded")
+            sys.exit()
+
         filter_pivot_row = filter_row.argmin()
         index_r, = np.where(ratio == filter_row[filter_pivot_row])
         pivot_row = index_r[0]
