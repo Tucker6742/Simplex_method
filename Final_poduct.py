@@ -76,9 +76,6 @@ while True:
         sign = np.append(sign, 0)
 
 
-
-
-
 # add slack var to objective and constrain_ls
 
 zeros, = np.where(sign == 0)
@@ -128,7 +125,7 @@ if (count_possible_basis < number_constrain):
         fixing_pivot_col = np.argmin(constrain_ls[-1, :-1])
         fixing_ratio = np.divide(
             constrain_ls[:-1, -1], constrain_ls[:-1, fixing_pivot_col])
-        filter_fixing_ratio = np.extract(fixing_ratio > 0, fixing_ratio)
+        filter_fixing_ratio = np.extract(fixing_ratio >= 0, fixing_ratio)
         filter_pivot_row = np.argmin(filter_fixing_ratio)
         possible_fixing_pivot_row = np.where(
             fixing_ratio == filter_fixing_ratio[filter_pivot_row])[0]
@@ -142,13 +139,23 @@ if (count_possible_basis < number_constrain):
         normalize(constrain_ls, fixing_pivot_row, fixing_pivot_col)
         Gauss_eliminate(constrain_ls, fixing_pivot_row, fixing_pivot_col)
 
-    if (not np.all(constrain_ls[-1, :] == 0)):
+    single_number = np.array(
+        [np.count_nonzero(constrain_ls[:-1, :-1], axis=0) == 1])
+    geq_0 = np.all(constrain_ls[:-1, :-1] >= 0, axis=0)
+    possible_basis = single_number & geq_0
+    count_possible_basis = np.count_nonzero(possible_basis)
+
+    if ((not np.all(constrain_ls[-1, :] == 0)) or count_possible_basis < number_constrain):
+        print(f"Failed at phase 1.")
         print(f"There is 0 solution for this problems.")
         sys.exit()
 
-
     # export table
     constrain_ls = constrain_ls[:-1, :]
+    print()
+    print(f"Need to go through phase 1")
+    print(f"Modified the system in phase 1 to get {number_constrain} basis")
+
 
 # Extract basis
 
@@ -245,6 +252,7 @@ while (True):
         filter_row = np.extract(ratio > 0, ratio)
         if (len(filter_row) == 0):
             print()
+            print(f"Failed at phase 2.")
             print(f"Unable to pivot in column {pivot_col}\n")
             print(f"The problem is unbounded")
             sys.exit()
@@ -261,5 +269,6 @@ while (True):
         copy_delta = np.round(delta, 3)
         j[pivot_row] = pivot_col
         print()
-        print(f"Pivot point is at ({pivot_row}, {pivot_col})")
+        print(
+            f"Pivot point is at ({pivot_row}, {pivot_col}) with value = {copy_constrain_ls[pivot_row][pivot_col]}")
         run_count += 1
