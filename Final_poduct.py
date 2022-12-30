@@ -139,19 +139,26 @@ if (count_possible_basis < number_constrain):
         normalize(constrain_ls, fixing_pivot_row, fixing_pivot_col)
         Gauss_eliminate(constrain_ls, fixing_pivot_row, fixing_pivot_col)
 
+    # export table if cannot pivot anymore
+    last_row = constrain_ls[-1, :]
+    constrain_ls = constrain_ls[:-1, :]
+
+    # remove all row that is still all 0
+    all_zero_row = np.all(constrain_ls[:, :-1] == 0, axis=1)
+    constrain_ls = constrain_ls[~all_zero_row]
+    (number_constrain, _) = np.shape(constrain_ls)
+
     single_number = np.array(
-        [np.count_nonzero(constrain_ls[:-1, :-1], axis=0) == 1])
-    geq_0 = np.all(constrain_ls[:-1, :-1] >= 0, axis=0)
+        [np.count_nonzero(constrain_ls[:, :-1], axis=0) == 1])
+    geq_0 = np.all(constrain_ls[:, :-1] >= 0, axis=0)
     possible_basis = single_number & geq_0
     count_possible_basis = np.count_nonzero(possible_basis)
 
-    if ((not np.all(constrain_ls[-1, :] == 0)) or count_possible_basis < number_constrain):
+    if ((not (np.all(last_row[:-1] >= 0) and np.all(abs(last_row[:-1]) <= 0.000000001))) or count_possible_basis < number_constrain):
         print(f"Failed at phase 1.")
         print(f"There is 0 solution for this problems.")
         sys.exit()
 
-    # export table
-    constrain_ls = constrain_ls[:-1, :]
     print()
     print(f"Need to go through phase 1")
     print(f"Modified the system in phase 1 to get {number_constrain} basis")
@@ -249,7 +256,7 @@ while (True):
         index, = np.where(delta == filter_col[filter_pivot_col])
         pivot_col = index[0]
         ratio = np.divide(constrain_ls[:, -1], constrain_ls[:, pivot_col])
-        filter_row = np.extract(ratio > 0, ratio)
+        filter_row = np.extract(ratio >= 0, ratio)
         if (len(filter_row) == 0):
             print()
             print(f"Failed at phase 2.")
