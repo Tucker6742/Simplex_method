@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from tabulate import tabulate
 import sys
+import math
 np.set_printoptions(precision=3, suppress=True)
 
 
@@ -118,7 +119,7 @@ if (count_possible_basis < number_constrain):
     constrain_ls = np.vstack((constrain_ls, check_row))
 
     # priority row to pivot
-    priority = np.array([0]*3)
+    priority = np.array([0]*number_constrain)
     # If last row has a negative number then repeat
     while (np.any(constrain_ls[-1, :-1] < 0)):
         # find most negative number there
@@ -256,7 +257,8 @@ while (True):
         index, = np.where(delta == filter_col[filter_pivot_col])
         pivot_col = index[0]
         ratio = np.divide(constrain_ls[:, -1], constrain_ls[:, pivot_col])
-        filter_row = np.extract(ratio >= 0, ratio)
+        sub = np.array([math.copysign(1,i) for i in ratio])
+        filter_row = np.extract(sub >= 0, ratio)
         if (len(filter_row) == 0):
             print()
             print(f"Failed at phase 2.")
