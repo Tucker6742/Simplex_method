@@ -257,6 +257,7 @@ while (True):
         index, = np.where(delta == filter_col[filter_pivot_col])
         pivot_col = index[0]
         ratio = np.divide(constrain_ls[:, -1], constrain_ls[:, pivot_col])
+        ratio = np.where(np.isinf(ratio), -np.Inf, ratio)
         sub = np.array([math.copysign(1,i) for i in ratio])
         filter_row = np.extract(sub >= 0, ratio)
         if (len(filter_row) == 0):
@@ -279,5 +280,5 @@ while (True):
         j[pivot_row] = pivot_col
         print()
         print(
-            f"Pivot point is at ({pivot_row}, {pivot_col}) with value = {copy_constrain_ls[pivot_row][pivot_col]}")
+            f"Pivot point is at ({pivot_row}, {pivot_col}) with value = {copy_constrain_ls[pivot_row, pivot_col]}")
         run_count += 1
