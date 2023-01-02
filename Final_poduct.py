@@ -258,7 +258,7 @@ while (True):
         pivot_col = index[0]
         ratio = np.divide(constrain_ls[:, -1], constrain_ls[:, pivot_col])
         ratio = np.where(np.isinf(ratio), -np.Inf, ratio)
-        sub = np.array([math.copysign(1,i) for i in ratio])
+        sub = np.array([math.copysign(1, i) for i in ratio])
         filter_row = np.extract(sub >= 0, ratio)
         if (len(filter_row) == 0):
             print()
@@ -274,11 +274,12 @@ while (True):
         Gauss_eliminate(constrain_ls, pivot_row, pivot_col)
         basis_coeff[pivot_row] = objective[pivot_col]
 
-        copy_constrain_ls = np.round(constrain_ls, 3)
         copy_z = np.round(z, 3)
         copy_delta = np.round(delta, 3)
         j[pivot_row] = pivot_col
         print()
         print(
             f"Pivot point is at ({pivot_row}, {pivot_col}) with value = {copy_constrain_ls[pivot_row, pivot_col]}")
+        copy_constrain_ls = np.round(constrain_ls, 3)
+
         run_count += 1
