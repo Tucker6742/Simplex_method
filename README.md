@@ -1,46 +1,45 @@
 # Simplex_method
-Program that solve linear programming problems by simplex method
 
-System requirement
+Program that solve linear programming problems by simplex method, using the method from [this website](http://reshmat.ru/simplex_method_lpp.html).
+
+## System requirement
 
 Python 3.10 or above
 
 [Download python](https://www.python.org/downloads/)
 
-Requirement library
+### Requirement library
 
 - numpy
-
-- pandas
-
+- polars
 - tabulate
+- pytest
 
 To install all these library
 
 - Open Powershell/Cmd
-
 - Type each row
 
-  ```
-  pip install numpy
-  pip install pandas
-  pip install tabulate
+  ```powershell
+  pip install -r requirement.txt
   ```
 
 To install pip if there are errors:
 
-- Open Powershell/Cmd
+- Open Powershell/CMD
 - Type this row
 
-```
+```powershell
 py -m ensurepip --upgrade
 ```
 
-To download and run code
+## Download and run code
 
 - Click on the "Code" green button
 - Download as Zip
 - Install requirement library
-- Run Final_product.py
+- ```powershell
+  python -m src.main.main
+  ```
 
-Video tutorial: https://youtu.be/ahDEIV2yd4o
+[Video tutorial](https://youtu.be/ahDEIV2yd4o)
